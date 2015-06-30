@@ -4,7 +4,7 @@ import pytest
 from multiprocessing import Process
 
 
-@pytest.yield_fixture()
+@pytest.yield_fixture(session='session') # changed to session scope
 def server_setup():
     process = Process(target=server.run_server)
     process.daemon = True
