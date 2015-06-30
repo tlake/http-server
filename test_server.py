@@ -4,7 +4,7 @@ import pytest
 from multiprocessing import Process
 
 
-@pytest.yield_fixture(session='session') # changed to session scope
+@pytest.yield_fixture(session='session')  # changed to session scope
 def server_setup():
     process = Process(target=server.run_server)
     process.daemon = True
@@ -40,3 +40,14 @@ def test_client_ok_response(client_setup):
     server_response = client_setup.recv(4096)
     expected_response = 'All good here, captain.'
     assert expected_response in server_response
+
+
+def test_server_rejects_non_get(client_setup):
+    client = client_setup
+    client.sendall('Not a proper GET for sure.')
+    expected_response = (
+        b"HTTP/1.1 405 Method Not Allowed\r\n"
+        b"Host: localhost:8000\r\n"
+    )
+    response = client.recv(4096)
+    assert expected_response in response
