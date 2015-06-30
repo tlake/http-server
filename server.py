@@ -4,17 +4,6 @@ import socket
 
 addr = ("127.0.0.1", 8000)
 
-"""
-Need to refactor headers.
-Can use empty list, and then append strings to list, and use '/r/n'.join(list)
-Be explicit about using bytestrings
-Always use /r/n line terminator
-email utils formatdate(usegmt=True) will provide date header formatted correctly
-Be sure to count byte length after you have byte string converted from other encoding
-Content-Type: text/plain; charset=utf-8
-
-"""
-
 
 def setup():
     """
@@ -50,6 +39,30 @@ def response_error():
     return response_headers + response_body
 
 
+def parse_request(request):
+    client_req = request.split('\r\n')
+    meth = ''
+    host = ''
+    uri = ''
+    for item in client_req:
+        if 'GET /' in item:
+            meth = item
+            meth = meth.split(' ')
+        if "Host: " in item:
+            host = item
+        if '/' in item:
+            uri = item
+
+    if 'GET' not in meth:
+        raise NotImplementedError('That is not a valid GET request')
+    elif 'HTTP/1.1' not in meth:
+        raise Exception('That is not a valid HTTP/1.1 request')
+    elif 'Host: ' not in host:
+        raise ValueError('The required Host header is not present')
+    else:
+        return uri
+
+
 def run_server():
     """
     Create new instance of server, and begin accepting, logging,
@@ -67,7 +80,8 @@ def run_server():
                 msg_recv = conn.recv(4096)
                 msg += msg_recv
                 if len(msg_recv) < 4096:
-                    conn.sendall(response_ok())
+                    parsed_response = ''
+                    conn.sendall(parsed_response)
                     conn.close()
                     break
             print(msg)

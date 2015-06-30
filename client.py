@@ -19,7 +19,7 @@ def client_setup():
 def run_client():
     """Create new instance of client, and send/receive request/response."""
     cli = client_setup()
-    msg = "do you hear me?"
+    msg = b"GET / HTTP/1.1\r\nHost: www.team.com:80\r\n\r\n"
     try:
         cli.sendall(msg)
         while True:
