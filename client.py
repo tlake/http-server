@@ -1,11 +1,12 @@
 import socket
 
+addr = ("127.0.0.1", 8000)
+
 
 def client_setup():
-    addr = ("127.0.0.1", 8000)
-    # Check the python socket documentation for a way to avoid the
-    # 'addr already in use' error
-
+    """
+    Create new client sockets, and connect to localhost address.
+    """
     client = socket.socket(
         socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_IP
     )
@@ -16,6 +17,7 @@ def client_setup():
 
 
 def run_client():
+    """Create new instance of client, and send/receive request/response."""
     cli = client_setup()
     msg = "do you hear me?"
     try:

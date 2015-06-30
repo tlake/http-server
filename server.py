@@ -6,7 +6,10 @@ addr = ("127.0.0.1", 8000)
 
 
 def setup():
-
+    """
+    Create new socket, and bind localhost to socket.
+    Set socket to listen, and return socket information.
+    """
     sock = socket.socket(
         socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_IP
     )
@@ -17,6 +20,7 @@ def setup():
 
 
 def response_ok():
+    """Return Header and Body information for Response 200."""
     response_headers = 'HTTP/1.1 200 OK\nContent-Type: text/html'
     response_body = '<html><body><h1></h1>'\
         '<p>All good here, captain.</p></body></html>'
@@ -25,6 +29,7 @@ def response_ok():
 
 
 def response_error():
+    """Return Header and Body information for Response 500."""
     response_headers = 'HTTP/1.1 500 Internal Server Error\n' +\
         'Content-Type: text/html'
     response_body = '<html><body><h1></h1>'\
@@ -34,6 +39,10 @@ def response_error():
 
 
 def run_server():
+    """
+    Create new instance of server, and begin accepting, logging,
+    and returning response. 
+    """
     server = setup()
     while True:
         try:
