@@ -7,15 +7,15 @@ ADDR = ("127.0.0.1", 8000)
 sock = socket.socket(
     socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_IP
 )
-# sock.setsockopt(socket.SOL_SOCKET, socket.REUSEADDR, 1)
+sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 sock.bind(ADDR)
 sock.listen(1)
 
 
 def response_ok():
     response_headers = 'HTTP/1.1 200 OK\nContent-Type: text/html'
-    response_body = '<html><body><h1></h1>\
-        <p>All good here, captain.</p></body></html>'
+    response_body = '<html><body><h1></h1>'\
+        '<p>All good here, captain.</p></body></html>'
 
     return response_headers + response_body
 
