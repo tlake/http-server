@@ -7,11 +7,7 @@ ADDR = ("127.0.0.1", 8000)
 sock = socket.socket(
     socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_IP
 )
-# sock.setsockopt(
-#     socket.SOL_SOCKET,
-#     socket.REUSEADDR,
-#     1
-# )
+# sock.setsockopt(socket.SOL_SOCKET, socket.REUSEADDR, 1)
 sock.bind(ADDR)
 sock.listen(1)
 
@@ -35,12 +31,12 @@ while True:
         conn, addr = sock.accept()
         msg = ''
         while True:
-            msg_recv = conn.recv(16)
+            msg_recv = conn.recv(4096)
             msg += msg_recv
-            if len(msg_recv) < 16:
+            if len(msg_recv) < 4096:
+                conn.sendall(response_ok())
                 conn.close()
                 break
         print msg
-        conn.sendall(response_ok())
     except KeyboardInterrupt:
         break
