@@ -42,12 +42,60 @@ def test_client_ok_response(client_setup):
     assert expected_response in server_response
 
 
-def test_server_rejects_non_get(client_setup):
-    client = client_setup
-    client.sendall('Not a proper GET for sure.')
-    expected_response = (
-        b"HTTP/1.1 405 Method Not Allowed\r\n"
-        b"Host: localhost:8000\r\n"
-    )
-    response = client.recv(4096)
-    assert expected_response in response
+# def test_server_rejects_non_get(client_setup):
+#     client = client_setup
+#     client.sendall(b'Not a proper GET for sure.')
+#     expected_response = (
+#         b"HTTP/1.1 405 Method Not Allowed\r\n"
+#         b"Host: localhost:8000\r\n"
+#     )
+#     response = client.recv(4096)
+#     assert expected_response in response
+
+
+# def test_server_rejects_non_http_1_1(client_setup):
+#     client = client_setup
+#     client.sendall('GET butstillwrong HTTP/1.0')
+#     expected_response
+
+
+################
+# TESTS REGARDING parse_request
+################
+
+# Implement a function called parse_request
+# The function should take a single argument which is the request from the
+# client. The function should only accept GET requests, any other request
+# should raise an appropriate Python error
+def test_parse_request_rejects_non_get():
+    with pytest.raises(ValueError):
+        server.parse_request(
+            b"POST / HTTP/1.1\r\n"
+            b"Host: http://example.com\r\n"
+            b"\r\n"
+        )
+
+
+# The function should only accept HTTP/1.1 requests, a request of any other
+# protocol should raise an appropriate Python error
+
+
+# The function should validate that a proper Host header was included in the
+# request, if not, raise an appropriate Python error
+
+
+# If none of the conditions above arise, then the function should return the
+# URI from the clients request
+
+
+# Update your response_error function to parameterize the error code and
+# reason phrase.
+
+
+# The return value should still be a well-formed HTTP error response, with the
+# passed error code and reason phrase.
+# Update the server loop you built for step one
+# pass the request you accumulate into your new parse_request function
+# handle any errors raised by building an appropriate HTTP error response
+# if no errors are raised, build an HTTP 200 OK response.
+# return the response you built to the client
