@@ -4,7 +4,7 @@ import socket
 import email
 
 addr = ("127.0.0.1", 8000)
-date = email.utils.formatdate(usegmt=True)
+date = email.Utils.formatdate(usegmt=True)
 
 
 def setup():
@@ -89,9 +89,13 @@ def run_server():
                 msg_recv = conn.recv(4096)
                 msg += msg_recv
                 if len(msg_recv) < 4096:
-                    parsed_respose = parse_request(msg)
-
-                    conn.sendall(parsed_respose)
+                    # import pdb; pdb.set_trace()
+                    parsed_response = parse_request(msg)
+                    if type(parsed_response) is str:
+                        client_response = response_ok()
+                    else:
+                        client_response = response_error(parsed_response)
+                    conn.sendall(client_response)
                     conn.close()
                     break
             print(msg)
