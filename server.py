@@ -21,9 +21,14 @@ def setup():
 
 def response_ok():
     """Return Header and Body information for Response 200."""
-    response_headers = 'HTTP/1.1 200 OK\nContent-Type: text/html'
-    response_body = '<html><body><h1></h1>'\
-        '<p>All good here, captain.</p></body></html>'
+    response_headers = (
+        b'HTTP/1.1 200 OK\r\n'
+        b'Content-Type: text/html\r\n'
+        b'Content-Length:\r\n')
+
+    response_body = (
+        b'<html><body><h1></h1>'
+        b'<p>All good here, captain.</p></body></html>')
 
     return response_headers + response_body
 
@@ -41,26 +46,21 @@ def response_error():
 
 def parse_request(request):
     client_req = request.split('\r\n')
-    meth = ''
+    meth = client_req[0].split(' ')
     host = ''
-    uri = ''
     for item in client_req:
-        if 'GET /' in item:
-            meth = item
-            meth = meth.split(' ')
         if "Host: " in item:
             host = item
-        if '/' in item:
-            uri = item
 
-    if 'GET' not in meth:
+    # import pdb; pdb.set_trace()
+    if 'GET' != meth[0]:
         raise NotImplementedError('That is not a valid GET request')
-    elif 'HTTP/1.1' not in meth:
+    elif 'HTTP/1.1' != meth[2]:
         raise Exception('That is not a valid HTTP/1.1 request')
     elif 'Host: ' not in host:
         raise ValueError('The required Host header is not present')
     else:
-        return uri
+        return meth[1]
 
 
 def run_server():
@@ -80,8 +80,7 @@ def run_server():
                 msg_recv = conn.recv(4096)
                 msg += msg_recv
                 if len(msg_recv) < 4096:
-                    parsed_response = ''
-                    conn.sendall(parsed_response)
+                    conn.sendall(parse_request(msg))
                     conn.close()
                     break
             print(msg)

@@ -4,7 +4,7 @@ import pytest
 from multiprocessing import Process
 
 
-@pytest.yield_fixture(session='session')  # changed to session scope
+@pytest.yield_fixture(scope='session')
 def server_setup():
     process = Process(target=server.run_server)
     process.daemon = True
@@ -34,12 +34,12 @@ def test_response_ok_fail():
     assert response_body in server.response_error()
 
 
-def test_client_ok_response(client_setup):
-    ok_resp = server.response_ok()
-    client_setup.sendall(ok_resp)
-    server_response = client_setup.recv(4096)
-    expected_response = 'All good here, captain.'
-    assert expected_response in server_response
+# def test_client_ok_response(client_setup):
+#     ok_resp = server.response_ok()
+#     client_setup.sendall(ok_resp)
+#     server_response = client_setup.recv(4096)
+#     expected_response = 'All good here, captain.'
+#     assert expected_response in server_response
 
 
 # def test_server_rejects_non_get(client_setup):
@@ -104,7 +104,7 @@ def test_parse_request_rejects_absent_host_header():
 def test_parse_request_returns_validated_request():
     valid_request = (
         b"GET /heres/the/URI HTTP/1.1\r\n"
-        b"Host: http://example.com\r\n"
+        b"Host: www.example.com\r\n"
         b"\r\n"
         b"blah blah some kind of body\r\n"
         b"\r\n"
