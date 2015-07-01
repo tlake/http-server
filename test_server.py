@@ -14,32 +14,26 @@ def server_setup():
 
 @pytest.fixture()
 def client_setup():
+    addr = ('127.0.0.1', 8000)
     client = socket.socket(
         socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_IP
     )
     client.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    client.connect(server.addr)
+    client.connect(addr)
     return client
 
 
-# def test_response_ok(server_setup):
-#     response_body = '<html><body><h1></h1>'\
-#         '<p>All good here, captain.</p></body></html>'
-#     assert response_body in server.response_ok()
+def test_response_ok(server_setup):
+    response_body = 'Content-Type: text/html\r\n'
+    assert response_body in server.response_ok()
 
 
-# def test_response_ok_fail():
-#     response_body = '<html><body><h1></h1>'\
-#         '<p>Your server no bueno.</p></body></html>'
-#     assert response_body in server.response_error()
-
-
-# def test_client_ok_response(client_setup):
-#     ok_resp = server.response_ok()
-#     client_setup.sendall(ok_resp)
-#     server_response = client_setup.recv(4096)
-#     expected_response = 'All good here, captain.'
-#     assert expected_response in server_response
+def test_client_ok_response(client_setup):
+    client = client_setup
+    client.sendall(b"GET / HTTP/1.1\r\nHost: www.host.com:80\r\n\r\n")
+    expected_response = 'All good here, captain.'
+    server_response = client.recv(4096)
+    assert expected_response in server_response
 
 
 # def test_server_rejects_non_get(client_setup):
@@ -47,16 +41,9 @@ def client_setup():
 #     client.sendall(b'Not a proper GET for sure.')
 #     expected_response = (
 #         b"HTTP/1.1 405 Method Not Allowed\r\n"
-#         b"Host: localhost:8000\r\n"
 #     )
 #     response = client.recv(4096)
 #     assert expected_response in response
-
-
-# def test_server_rejects_non_http_1_1(client_setup):
-#     client = client_setup
-#     client.sendall('GET butstillwrong HTTP/1.0')
-#     expected_response
 
 
 ################

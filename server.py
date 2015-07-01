@@ -17,7 +17,7 @@ def setup():
     )
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.bind(addr)
-    sock.listen(1)
+    sock.listen(2)
     return sock
 
 
@@ -94,18 +94,18 @@ def run_server():
                         client_response = parse_request(msg)
                     except NotImplementedError:
                         client_response = response_error(
-                            "HTTP/1.1 405 Method Not Allowed\r\n",
-                            "GET method required.\r\n"
+                            b"HTTP/1.1 405 Method Not Allowed\r\n",
+                            b"GET method required.\r\n"
                         )
                     except NameError:
                         client_response = response_error(
-                            "HTTP/1.1 400 Bad Request\r\n",
-                            "Not a valid HTTP/1.1 request.\r\n"
+                            b"HTTP/1.1 400 Bad Request\r\n",
+                            b"Not a valid HTTP/1.1 request.\r\n"
                         )
                     except ValueError:
                         client_response = response_error(
-                            "HTTP/1.1 406 Not Acceptable\r\n",
-                            "'Host' header required.\r\n"
+                            b"HTTP/1.1 406 Not Acceptable\r\n",
+                            b"'Host' header required.\r\n"
                         )
                     conn.sendall(client_response)
                     conn.close()
