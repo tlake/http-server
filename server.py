@@ -37,33 +37,18 @@ def response_ok():
     return response_headers + response_body
 
 
-def response_error(error):
+def response_error(header, text):
     """Return Header and Body information for three types of errors"""
 
-    # if Python error is NotImplementedError, return 405 Method Not Allowed
-    if error == NotImplementedError:
-        primary_header = 'HTTP/1.1 405 Method Not Allowed\r\n'
-        p_text = "GET method required.\r\n"
-
-    # if Python error is Exception, return 400 Bad Request
-    if error == Exception:
-        primary_header = "HTTP/1.1 400 Bad Request\r\n"
-        p_text = "Not a valid HTTP/1.1 request.\r\n"
-
-    # if Python error is ValueError, return 406 Not Acceptable
-    if error == ValueError:
-        primary_header = "HTTP/1.1 406 Not Acceptable\r\n"
-        p_text = "'Host' header required.\r\n"
-
     response_headers = (
-        primary_header +
+        header +
         date +
         b'Content-Type: text/html\r\n'
         b'Content-Length:\r\n')
 
     response_body = (
         b'<html><body>'
-        b'<p>' + p_text + '</p>'
+        b'<p>' + text + '</p>'
         b'</body></html>')
 
     return response_headers + response_body
@@ -77,11 +62,10 @@ def parse_request(request):
         if "Host: " in item:
             host = item
 
-    # import pdb; pdb.set_trace()
     if 'GET' != meth[0]:
         raise NotImplementedError('That is not a valid GET request')
     elif 'HTTP/1.1' != meth[2]:
-        raise Exception('That is not a valid HTTP/1.1 request')
+        raise NameError('That is not a valid HTTP/1.1 request')
     elif 'Host: ' not in host:
         raise ValueError('The required Host header is not present')
     else:
@@ -106,11 +90,23 @@ def run_server():
                 msg += msg_recv
                 if len(msg_recv) < 4096:
                     # import pdb; pdb.set_trace()
-                    parsed_response = parse_request(msg)
-                    if type(parsed_response) is str:
-                        client_response = response_ok()
-                    else:
-                        client_response = response_error(parsed_response)
+                    try:
+                        client_response = parse_request(msg)
+                    except NotImplementedError:
+                        client_response = response_error(
+                            "HTTP/1.1 405 Method Not Allowed\r\n",
+                            "GET method required.\r\n"
+                        )
+                    except NameError:
+                        client_response = response_error(
+                            "HTTP/1.1 400 Bad Request\r\n",
+                            "Not a valid HTTP/1.1 request.\r\n"
+                        )
+                    except ValueError:
+                        client_response = response_error(
+                            "HTTP/1.1 406 Not Acceptable\r\n",
+                            "'Host' header required.\r\n"
+                        )
                     conn.sendall(client_response)
                     conn.close()
                     break
