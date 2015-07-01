@@ -37,17 +37,33 @@ def response_ok():
     return response_headers + response_body
 
 
-def response_error():
-    """Return Header and Body information for Response 500."""
+def response_error(error):
+    """Return Header and Body information for three types of errors"""
+
+    # if Python error is NotImplementedError, return 405 Method Not Allowed
+    if error == NotImplementedError:
+        primary_header = 'HTTP/1.1 405 Method Not Allowed\r\n'
+        p_text = "GET method required.\r\n"
+
+    # if Python error is Exception, return 400 Bad Request
+    if error == Exception:
+        primary_header = "HTTP/1.1 400 Bad Request\r\n"
+        p_text = "Not a valid HTTP/1.1 request.\r\n"
+
+    # if Python error is ValueError, return 406 Not Acceptable
+    if error == ValueError:
+        primary_header = "HTTP/1.1 406 Not Acceptable\r\n"
+        p_text = "'Host' header required.\r\n"
+
     response_headers = (
-        'HTTP/1.1 500 Internal Server Error\r\n'
-        + date +
+        primary_header +
+        date +
         b'Content-Type: text/html\r\n'
         b'Content-Length:\r\n')
 
     response_body = (
         b'<html><body>'
-        b'<p>Your server no bueno.</p>'
+        b'<p>' + p_text + '</p>'
         b'</body></html>')
 
     return response_headers + response_body
