@@ -22,16 +22,16 @@ def client_setup():
     return client
 
 
-def test_response_ok(server_setup):
-    response_body = '<html><body><h1></h1>'\
-        '<p>All good here, captain.</p></body></html>'
-    assert response_body in server.response_ok()
+# def test_response_ok(server_setup):
+#     response_body = '<html><body><h1></h1>'\
+#         '<p>All good here, captain.</p></body></html>'
+#     assert response_body in server.response_ok()
 
 
-def test_response_ok_fail():
-    response_body = '<html><body><h1></h1>'\
-        '<p>Your server no bueno.</p></body></html>'
-    assert response_body in server.response_error()
+# def test_response_ok_fail():
+#     response_body = '<html><body><h1></h1>'\
+#         '<p>Your server no bueno.</p></body></html>'
+#     assert response_body in server.response_error()
 
 
 # def test_client_ok_response(client_setup):

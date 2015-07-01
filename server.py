@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 import socket
+import email
 
 addr = ("127.0.0.1", 8000)
+date = email.utils.formatdate(usegmt=True)
 
 
 def setup():
@@ -23,23 +25,30 @@ def response_ok():
     """Return Header and Body information for Response 200."""
     response_headers = (
         b'HTTP/1.1 200 OK\r\n'
+        + date +
         b'Content-Type: text/html\r\n'
         b'Content-Length:\r\n')
 
     response_body = (
-        b'<html><body><h1></h1>'
-        b'<p>All good here, captain.</p></body></html>')
+        b'<html><body>'
+        b'<p>All good here, captain.</p>'
+        b'</body></html>')
 
     return response_headers + response_body
 
 
 def response_error():
     """Return Header and Body information for Response 500."""
-    response_headers = ('HTTP/1.1 500 Internal Server Error\r\n'
-                        'Content-Type: text/html\r\n'
-                        )
-    response_body = '<html><body><h1></h1>'\
-        '<p>Your server no bueno.</p></body></html>'
+    response_headers = (
+        'HTTP/1.1 500 Internal Server Error\r\n'
+        + date +
+        b'Content-Type: text/html\r\n'
+        b'Content-Length:\r\n')
+
+    response_body = (
+        b'<html><body>'
+        b'<p>Your server no bueno.</p>'
+        b'</body></html>')
 
     return response_headers + response_body
 
@@ -80,7 +89,9 @@ def run_server():
                 msg_recv = conn.recv(4096)
                 msg += msg_recv
                 if len(msg_recv) < 4096:
-                    conn.sendall(parse_request(msg))
+                    parsed_respose = parse_request(msg)
+
+                    conn.sendall(parsed_respose)
                     conn.close()
                     break
             print(msg)
