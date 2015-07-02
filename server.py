@@ -109,10 +109,22 @@ def parse_request(request):
 
 def resolve_uri(parse):
     if os.path.exists(parse):
-        return ('<?xml version="1.0" encoding="utf-8"?>'
-                '<html><img src="webroot/images/sample_1.png"></html>')
+        if os.path.isdir(parse):
+            cwd = os.getcwd()
+            dir_path = os.path.join(cwd, parse)
+            dir_list = ', '.join(os.listdir(dir_path))
+            _body = (b'<http><body>'
+                     b'<p>' + dir_list + '</p>'
+                     b'</body></html>   ')
+            _type = b'content-type: text/html'
+            response = _body + _type
+        elif os.path.isfile(parse):
+            cwd = os.getcwd()
+            file_path = os.path.join(cwd, parse)
+            response = open(file_path).read()
+        return response
     else:
-        return b'NO'
+        return OSError
 
 
 def run_server():
@@ -134,7 +146,8 @@ def run_server():
                 if len(msg_recv) < 4096:
                     # import pdb; pdb.set_trace()
                     try:
-                        client_response = resolve_uri(parse_request(msg))
+                        parsed_response = parse_request(msg)
+                        client_response = resolve_uri(parsed_response)
                     except NotImplementedError:
                         client_response = response_error(
                             b"HTTP/1.1 405 Method Not Allowed\r\n",
@@ -150,6 +163,8 @@ def run_server():
                             b"HTTP/1.1 406 Not Acceptable\r\n",
                             b"'Host' header required.\r\n"
                         )
+                    except OSError:
+                        pass
                     conn.sendall(client_response)
                     conn.close()
                     break
