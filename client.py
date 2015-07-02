@@ -19,7 +19,7 @@ def client_setup():
 def run_client():
     """Create new instance of client, and send/receive request/response."""
     cli = client_setup()
-    msg = b"GET / HTTP/1.1\r\nHost: www.team.com:80\r\n\r\n"
+    msg = b"GET webroot/images/sample_1.png HTTP/1.1\r\nHost: www.team.com:80\r\n\r\n"
     try:
         cli.sendall(msg)
         while True:

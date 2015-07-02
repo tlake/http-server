@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 import socket
 import email
+import os
 
 addr = ("127.0.0.1", 8000)
 date = email.Utils.formatdate(usegmt=True)
@@ -106,6 +107,14 @@ def parse_request(request):
         return meth[1]
 
 
+def resolve_uri(parse):
+    if os.path.exists(parse):
+        return ('<?xml version="1.0" encoding="utf-8"?>'
+                '<html><img src="webroot/images/sample_1.png"></html>')
+    else:
+        return b'NO'
+
+
 def run_server():
     """
     Create new instance of server, and begin accepting, logging,
@@ -125,7 +134,7 @@ def run_server():
                 if len(msg_recv) < 4096:
                     # import pdb; pdb.set_trace()
                     try:
-                        client_response = parse_request(msg)
+                        client_response = resolve_uri(parse_request(msg))
                     except NotImplementedError:
                         client_response = response_error(
                             b"HTTP/1.1 405 Method Not Allowed\r\n",
