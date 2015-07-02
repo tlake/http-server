@@ -19,7 +19,7 @@ def setup():
     )
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.bind(addr)
-    sock.listen(2)
+    sock.listen(4)
     return sock
 
 
