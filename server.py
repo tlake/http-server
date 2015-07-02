@@ -5,6 +5,7 @@ import email
 
 addr = ("127.0.0.1", 8000)
 date = email.Utils.formatdate(usegmt=True)
+_CRLF = b"\r\n"
 
 
 def setup():
@@ -21,20 +22,40 @@ def setup():
     return sock
 
 
-def response_ok():
-    """Return Header and Body information for Response 200."""
-    response_headers = (
-        b'HTTP/1.1 200 OK\r\n'
-        + date +
-        b'Content-Type: text/html\r\n'
-        b'Content-Length:\r\n')
+def response_ok(_body):
+    """
+    Ensure that the body of the requested resource is returned in a "200 OK"
+    response.
 
-    response_body = (
-        b'<html><body>'
-        b'<p>All good here, captain.</p>'
-        b'</body></html>')
+    The response should include the appropriate header to indicate the type
+    of resource being returned.
 
-    return response_headers + response_body
+    The response should also include the appropriate header to indicate the
+    amount of content being returned.
+
+    The response should include any other valid HTTP headers you wish to add.
+
+    You will update your response_ok function to accomplish this task.
+    """
+
+    _RESPONSE_TEMPLATE = _CRLF.join([
+        b"HTTP/1.1 200 OK",
+        b"{date}",
+        b"Content-Type: {content_type}",
+        b"Content-Length: {content_length}",
+        b"",
+        b"{content_body}",
+        b"",
+    ])
+
+    _RESPONSE_TEMPLATE
+
+    return _RESPONSE_TEMPLATE.format(
+        date=date,
+        content_type='image',
+        content_length='something',
+        content_body=_body
+    )
 
 
 def response_error(header, text):
