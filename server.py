@@ -55,6 +55,19 @@ def response_error(header, text):
 
 
 def parse_request(request):
+    """
+    NOTES:
+
+    Use `.split(< 2 CRLF's >, 1)` to separate the header chunk from the
+    body chunk, since they must always be separated by two CRLFs.
+    Additionally, the second optional argument to .split() is the number
+    of times to split. This way, we avoid dealing with a situation where
+    the body contains double CRLFs.
+
+    Then, for processing headers, use .split() without args, which will
+    strip at *any* intersituated whitespace, whereas .split(' ') will
+    split at *each individual* whitespace.
+    """
     client_req = request.split('\r\n')
     meth = client_req[0].split(' ')
     host = ''
