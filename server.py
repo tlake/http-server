@@ -24,20 +24,6 @@ def setup():
 
 
 def response_ok(_body, _type):
-    """
-    Ensure that the body of the requested resource is returned in a "200 OK"
-    response.
-
-    The response should include the appropriate header to indicate the type
-    of resource being returned.
-
-    The response should also include the appropriate header to indicate the
-    amount of content being returned.
-
-    The response should include any other valid HTTP headers you wish to add.
-
-    You will update your response_ok function to accomplish this task.
-    """
 
     _date = email.Utils.formatdate(usegmt=True)
 
@@ -50,8 +36,6 @@ def response_ok(_body, _type):
         b"{content_body}",
         b"",
     ])
-
-    _RESPONSE_TEMPLATE
 
     return _RESPONSE_TEMPLATE.format(
         date=_date,
@@ -150,25 +134,25 @@ def run_server():
                     try:
                         parsed_response = parse_request(msg)
                         body, content_type = resolve_uri(parsed_response)
+                        server_response = response_ok(body, content_type)
                     except NotImplementedError:
-                        client_response = response_error(
+                        server_response = response_error(
                             b"HTTP/1.1 405 Method Not Allowed\r\n",
                             b"GET method required.\r\n"
                         )
                     except NameError:
-                        client_response = response_error(
+                        server_response = response_error(
                             b"HTTP/1.1 400 Bad Request\r\n",
                             b"Not a valid HTTP/1.1 request.\r\n"
                         )
                     except ValueError:
-                        client_response = response_error(
+                        server_response = response_error(
                             b"HTTP/1.1 406 Not Acceptable\r\n",
                             b"'Host' header required.\r\n"
                         )
                     except OSError:
-                        pass
-                    client_response = response_ok(body, content_type)
-                    conn.sendall(client_response)
+                        server_response = "resource not found"
+                    conn.sendall(server_response)
                     conn.close()
                     break
             print(msg)
