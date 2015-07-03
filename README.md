@@ -1,3 +1,5 @@
+[![Travis](https://travis-ci.org/tlake/http-server.svg)](https://travis-ci.org/tlake/http-server.svg)
+
 # http-server
 
 A simple HTTP server in Python.

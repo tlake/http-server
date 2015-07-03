@@ -2,9 +2,12 @@
 from __future__ import unicode_literals
 import socket
 import email
+import os
+import sys
+import mimetypes
 
-addr = ("127.0.0.1", 8000)
-date = email.Utils.formatdate(usegmt=True)
+ADDR = ("127.0.0.1", 8000)
+_CRLF = b"\r\n"
 
 
 def setup():
@@ -16,42 +19,55 @@ def setup():
         socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_IP
     )
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.bind(addr)
-    sock.listen(2)
+    sock.bind(ADDR)
+    sock.listen(4)
     return sock
 
 
-def response_ok():
-    """Return Header and Body information for Response 200."""
-    response_headers = (
-        b'HTTP/1.1 200 OK\r\n'
-        + date +
-        b'Content-Type: text/html\r\n'
-        b'Content-Length:\r\n')
+def response_ok(_body, _type):
 
-    response_body = (
-        b'<html><body>'
-        b'<p>All good here, captain.</p>'
-        b'</body></html>')
+    _date = email.Utils.formatdate(usegmt=True)
 
-    return response_headers + response_body
+    _RESPONSE_TEMPLATE = _CRLF.join([
+        b"HTTP/1.1 200 OK",
+        b"{date}",
+        b"Content-Type: {content_type}",
+        b"Content-Length: {content_length}",
+        b"",
+        b"{content_body}",
+        b"",
+    ])
+
+    return _RESPONSE_TEMPLATE.format(
+        date=_date,
+        content_type=_type,
+        content_length=str(sys.getsizeof(_body)),
+        content_body=_body
+    )
 
 
-def response_error(header, text):
+def response_error(status_code, reason_phrase, content_body):
     """Return Header and Body information for three types of errors"""
 
-    response_headers = (
-        header +
-        date +
-        b'Content-Type: text/html\r\n'
-        b'Content-Length:\r\n')
+    date = email.Utils.formatdate(usegmt=True)
 
-    response_body = (
-        b'<html><body>'
-        b'<p>' + text + '</p>'
-        b'</body></html>')
+    _RESPONSE_TEMPLATE = _CRLF.join([
+        b"HTTP/1.1 {status_code} {reason_phrase}",
+        b"{date}",
+        b"Content-Type: text/html",
+        b"Content-Length: {content_length}",
+        b"",
+        b"<html><body><p>{content_body}</p></body></html>",
+        b"",
+    ])
 
-    return response_headers + response_body
+    return _RESPONSE_TEMPLATE.format(
+        status_code=status_code,
+        reason_phrase=reason_phrase,
+        date=date,
+        content_length=str(sys.getsizeof(content_body)),
+        content_body=content_body
+    )
 
 
 def parse_request(request):
@@ -72,6 +88,25 @@ def parse_request(request):
         return meth[1]
 
 
+def resolve_uri(parse):
+    root = os.path.join(os.getcwd(), 'webroot')
+    body = ''
+    content_type = ''
+    if os.path.isdir(root + parse):
+        body = '<!DOCTYPE html><html><body><ul>'
+        for file_ in os.listdir(root + parse):
+            body += '<li>' + file_ + '</li>'
+        body += '</ul></body></html>'
+        content_type = 'text/html'
+    elif os.path.isfile(root + parse):
+        with open((root + parse), 'rb') as file_:
+            body = file_.read()
+        content_type, encoding = mimetypes.guess_type(parse)
+    else:
+        raise OSError
+    return (body, content_type)
+
+
 def run_server():
     """
     Create new instance of server, and begin accepting, logging,
@@ -89,25 +124,35 @@ def run_server():
                 msg_recv = conn.recv(4096)
                 msg += msg_recv
                 if len(msg_recv) < 4096:
-                    # import pdb; pdb.set_trace()
                     try:
-                        client_response = parse_request(msg)
+                        parsed_response = parse_request(msg)
+                        body, content_type = resolve_uri(parsed_response)
+                        server_response = response_ok(body, content_type)
                     except NotImplementedError:
-                        client_response = response_error(
-                            b"HTTP/1.1 405 Method Not Allowed\r\n",
-                            b"GET method required.\r\n"
+                        server_response = response_error(
+                            b"405",
+                            b"Method Not Allowed",
+                            b"GET method required."
                         )
                     except NameError:
-                        client_response = response_error(
-                            b"HTTP/1.1 400 Bad Request\r\n",
-                            b"Not a valid HTTP/1.1 request.\r\n"
+                        server_response = response_error(
+                            b"400",
+                            b"Bad Request",
+                            b"Not a valid HTTP/1.1 request."
                         )
                     except ValueError:
-                        client_response = response_error(
-                            b"HTTP/1.1 406 Not Acceptable\r\n",
-                            b"'Host' header required.\r\n"
+                        server_response = response_error(
+                            b"406",
+                            b"Not Acceptable",
+                            b"'Host' header required."
                         )
-                    conn.sendall(client_response)
+                    except OSError:
+                        server_response = response_error(
+                            b"420",
+                            b"Enhance Your Calm",
+                            b"Keyboard Driver Error"
+                        )
+                    conn.sendall(server_response)
                     conn.close()
                     break
             print(msg)
@@ -117,3 +162,28 @@ def run_server():
 
 if __name__ == "__main__":
     run_server()
+
+"""RESP = ("HTTP/1.1 200 OK"
+        "Content-Type: text/plain"
+        ""
+        "hello")
+
+
+def echo(socket, address):
+    buffsize = 16
+    while True:
+        data = socket.recv(buffsize)
+        if len(data) < buffsize:
+            socket.sendall(RESP)
+        else:
+            socket.close()
+            break
+
+
+if __name__ == '__main__':
+    from gevent.server import StreamServer
+    from gevent.monkey import patch_all
+    patch_all()
+    server = StreamServer(('127.0.0.1', 8000), echo)
+    print("starting server")
+"""
