@@ -17,8 +17,9 @@ def test_response_ok():
 
 def test_response_error():
     response = server.response_error(
-        b"HTTP/1.1 405 Method Not Allowed\r\n",
-        b"GET method required.\r\n"
+        b"405",
+        b"Method Not Allowed",
+        b"GET method required."
     )
     assert b"GET method required" in response
     assert b"text/html" in response
