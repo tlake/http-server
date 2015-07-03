@@ -91,3 +91,12 @@ def test_client_receives_root_filesystem(client_setup):
     server_response = client.recv(4096)
     client.close()
     assert expected_response in server_response
+
+
+def test_client_receives_error_on_not_get(client_setup):
+    client = client_setup
+    client.sendall(b"DELETE / HTTP/1.1\r\nHost: www.host.com:80\r\n\r\n")
+    expected_response = (b"405 Method Not Allowed")
+    server_response = client.recv(4096)
+    client.close()
+    assert expected_response in server_response
