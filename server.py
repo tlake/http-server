@@ -46,39 +46,31 @@ def response_ok(_body, _type):
     )
 
 
-def response_error(header, text):
+def response_error(status_code, reason_phrase, content_body):
     """Return Header and Body information for three types of errors"""
 
-    _date = email.Utils.formatdate(usegmt=True)
+    date = email.Utils.formatdate(usegmt=True)
 
-    response_headers = (
-        header +
-        _date +
-        b'Content-Type: text/html\r\n'
-        b'Content-Length:\r\n')
+    _RESPONSE_TEMPLATE = _CRLF.join([
+        b"HTTP/1.1 {status_code} {reason_phrase}",
+        b"{date}",
+        b"Content-Type: text/html",
+        b"Content-Length: {content_length}",
+        b"",
+        b"<html><body><p>{content_body}</p></body></html>",
+        b"",
+    ])
 
-    response_body = (
-        b'<html><body>'
-        b'<p>' + text + '</p>'
-        b'</body></html>')
-
-    return response_headers + response_body
+    return _RESPONSE_TEMPLATE.format(
+        status_code=status_code,
+        reason_phrase=reason_phrase,
+        date=date,
+        content_length=sys.getsizeof(content_body),
+        content_body=content_body
+    )
 
 
 def parse_request(request):
-    """
-    NOTES:
-
-    Use `.split(< 2 CRLF's >, 1)` to separate the header chunk from the
-    body chunk, since they must always be separated by two CRLFs.
-    Additionally, the second optional argument to .split() is the number
-    of times to split. This way, we avoid dealing with a situation where
-    the body contains double CRLFs.
-
-    Then, for processing headers, use .split() without args, which will
-    strip at *any* intersituated whitespace, whereas .split(' ') will
-    split at *each individual* whitespace.
-    """
     client_req = request.split('\r\n')
     meth = client_req[0].split(' ')
     host = ''
@@ -138,21 +130,28 @@ def run_server():
                         server_response = response_ok(body, content_type)
                     except NotImplementedError:
                         server_response = response_error(
-                            b"HTTP/1.1 405 Method Not Allowed\r\n",
-                            b"GET method required.\r\n"
+                            b"405",
+                            b"Method Not Allowed",
+                            b"GET method required."
                         )
                     except NameError:
                         server_response = response_error(
-                            b"HTTP/1.1 400 Bad Request\r\n",
-                            b"Not a valid HTTP/1.1 request.\r\n"
+                            b"400",
+                            b"Bad Request",
+                            b"Not a valid HTTP/1.1 request."
                         )
                     except ValueError:
                         server_response = response_error(
-                            b"HTTP/1.1 406 Not Acceptable\r\n",
-                            b"'Host' header required.\r\n"
+                            b"406",
+                            b"Not Acceptable",
+                            b"'Host' header required."
                         )
                     except OSError:
-                        server_response = "resource not found"
+                        server_response = response_error(
+                            b"420",
+                            b"Resource Not Found",
+                            b"The resource you requested does not exist."
+                        )
                     conn.sendall(server_response)
                     conn.close()
                     break
