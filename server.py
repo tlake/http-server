@@ -25,6 +25,7 @@ def setup():
 
 
 def response_ok(_body, _type):
+    """Zip together arguments for returning an OK response"""
 
     _date = email.Utils.formatdate(usegmt=True)
 
