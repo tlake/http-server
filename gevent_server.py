@@ -6,25 +6,26 @@ import sys
 import mimetypes
 
 addr = ("127.0.0.1", 8000)
-date = email.Utils.formatdate(usegmt=True)
 _CRLF = b"\r\n"
+_RESPONSE_TEMPLATE = _CRLF.join([
+    b"HTTP/1.1 {status_code} {reason_phrase}",
+    b"{date}",
+    b"Content-Type: {content_type}",
+    b"Content-Length: {content_length}",
+    b"",
+    b"<html><body><p>{content_body}</p></body></html>",
+    b"",
+])
 
 
 def response_ok(_body, _type):
+    """Zip together arguments for returning an OK response"""
 
     _date = email.Utils.formatdate(usegmt=True)
 
-    _RESPONSE_TEMPLATE = _CRLF.join([
-        b"HTTP/1.1 200 OK",
-        b"{date}",
-        b"Content-Type: {content_type}",
-        b"Content-Length: {content_length}",
-        b"",
-        b"{content_body}",
-        b"",
-    ])
-
     return _RESPONSE_TEMPLATE.format(
+        status_code=b"200",
+        reason_phrase=b"OK",
         date=_date,
         content_type=_type,
         content_length=str(sys.getsizeof(_body)),
@@ -33,24 +34,15 @@ def response_ok(_body, _type):
 
 
 def response_error(status_code, reason_phrase, content_body):
-    """Return Header and Body information for three types of errors"""
+    """Zip together arguments for returning an error response"""
 
     date = email.Utils.formatdate(usegmt=True)
-
-    _RESPONSE_TEMPLATE = _CRLF.join([
-        b"HTTP/1.1 {status_code} {reason_phrase}",
-        b"{date}",
-        b"Content-Type: text/html",
-        b"Content-Length: {content_length}",
-        b"",
-        b"<html><body><p>{content_body}</p></body></html>",
-        b"",
-    ])
 
     return _RESPONSE_TEMPLATE.format(
         status_code=status_code,
         reason_phrase=reason_phrase,
         date=date,
+        content_type=b'text/plain',
         content_length=str(sys.getsizeof(content_body)),
         content_body=content_body
     )

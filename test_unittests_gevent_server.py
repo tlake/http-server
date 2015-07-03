@@ -22,7 +22,7 @@ def test_response_error():
         b"GET method required."
     )
     assert b"GET method required" in response
-    assert b"text/html" in response
+    assert b"text/plain" in response
     assert b"</body>" in response
 
 
