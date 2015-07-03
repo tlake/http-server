@@ -32,7 +32,7 @@ _CRLF = b'\r\n'
 
 
 @pytest.fixture(scope='module', autouse=True)
-def gevent_server_setup(request):
+def server_setup(request):
     process = Process(target=server.run_server)
     process.daemon = True
     process.start()
@@ -55,6 +55,15 @@ def client_setup():
     return client
 
 
+def verify_response(response):
+    assert 2 * _CRLF in response
+    head_and_body = response.split((2 * _CRLF), 1)
+    head_chunk = head_and_body[0].split(_CRLF)
+    first_line = head_chunk[0].split()
+    assert first_line[0] == b"HTTP/1.1"
+    assert first_line[1].isdigit()
+    assert first_line[2] is not None
+
 ################
 # FUNCTIONAL TESTS
 ################
@@ -66,31 +75,36 @@ def client_setup():
 
 def test_client_receives_ok_on_image_request(client_setup):
     client = client_setup
-    client.sendall(_CRLF.join([
-        b"GET /images/sample_1.png HTTP/1.1"
-        b"Host: www.host.com:80"
+    request = _CRLF.join([
+        b"GET /images/sample_1.png HTTP/1.1",
+        b"Host: www.host.com:80",
         b""
-    ]))
+    ])
     ok_header = b"HTTP/1.1 200 OK"
+    content_type = b'image'
+    client.sendall(request)
     server_response = client.recv(4096)
     client.close()
+    verify_response(server_response)
     assert ok_header in server_response
-    content_type = b'image'
     assert content_type in server_response
-    assert 2 * _CRLF in server_response
 
 
 def test_client_receives_ok_on_textfile_request(client_setup):
     client = client_setup
-    client.sendall(
-        b"GET /sample.txt HTTP/1.1\r\n"
-        b"Host: www.host.com:80\r\n"
-        b"\r\n"
-    )
+    request = _CRLF.join([
+        b"GET /sample.txt HTTP/1.1",
+        b"Host: www.host.com:80",
+        b""
+    ])
     ok_header = b"HTTP/1.1 200 OK"
+    content_type = b'text/plain'
+    client.sendall(request)
     server_response = client.recv(4096)
     client.close()
+    verify_response(server_response)
     assert ok_header in server_response
+    assert content_type in server_response
 
 
 def test_client_receives_sample_txt_on_request(client_setup):
@@ -107,6 +121,7 @@ def test_client_receives_sample_txt_on_request(client_setup):
     )
     server_response = client.recv(4096)
     client.close()
+    verify_response(server_response)
     assert text in server_response
 
 
@@ -121,6 +136,7 @@ def test_client_receives_root_filesystem(client_setup):
     ]
     server_response = client.recv(4096)
     client.close()
+    verify_response(server_response)
     for line in expected_response:
         assert line in server_response
 
@@ -131,6 +147,7 @@ def test_client_receives_error_on_not_get(client_setup):
     expected_response = (b"405 Method Not Allowed")
     server_response = client.recv(4096)
     client.close()
+    verify_response(server_response)
     assert expected_response in server_response
 
 
@@ -140,6 +157,7 @@ def test_client_receives_error_on_bad_request(client_setup):
     expected_response = (b"400 Bad Request")
     server_response = client.recv(4096)
     client.close()
+    verify_response(server_response)
     assert expected_response in server_response
 
 
@@ -149,6 +167,7 @@ def test_client_receives_error_on_no_host(client_setup):
     expected_response = (b"406 Not Acceptable")
     server_response = client.recv(4096)
     client.close()
+    verify_response(server_response)
     assert expected_response in server_response
 
 
@@ -158,4 +177,5 @@ def test_client_receives_error_on_bad_uri(client_setup):
     expected_response = (b"404 Not Found")
     server_response = client.recv(4096)
     client.close()
+    verify_response(server_response)
     assert expected_response in server_response
