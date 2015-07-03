@@ -65,7 +65,7 @@ def response_error(status_code, reason_phrase, content_body):
         status_code=status_code,
         reason_phrase=reason_phrase,
         date=date,
-        content_length=sys.getsizeof(content_body),
+        content_length=str(sys.getsizeof(content_body)),
         content_body=content_body
     )
 
@@ -149,8 +149,8 @@ def run_server():
                     except OSError:
                         server_response = response_error(
                             b"420",
-                            b"Resource Not Found",
-                            b"The resource you requested does not exist."
+                            b"Enhance Your Calm",
+                            b"Keyboard Driver Error"
                         )
                     conn.sendall(server_response)
                     conn.close()
