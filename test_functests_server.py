@@ -1,33 +1,21 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from server import run_server
+import server
 import socket
 import pytest
+import time
 from multiprocessing import Process
 
 
 addr = ("127.0.0.1", 8000)
 
 
-# def setup():
-#     """
-#     Create new socket, and bind localhost to socket.
-#     Set socket to listen, and return socket information.
-#     """
-#     sock = socket.socket(
-#         socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_IP
-#     )
-#     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-#     sock.bind(addr)
-#     sock.listen(4)
-#     return sock
-
-
 @pytest.yield_fixture(scope='session', autouse=True)
 def server_setup():
-    process = Process(target=run_server)
+    process = Process(target=server.run_server)
     process.daemon = True
     process.start()
+    time.sleep(0.1)
     yield process
 
 

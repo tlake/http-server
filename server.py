@@ -4,8 +4,7 @@ import socket
 import email
 import os
 
-addr = ("127.0.0.1", 8000)
-date = email.Utils.formatdate(usegmt=True)
+ADDR = ("127.0.0.1", 8000)
 _CRLF = b"\r\n"
 
 
@@ -18,7 +17,7 @@ def setup():
         socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_IP
     )
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.bind(addr)
+    sock.bind(ADDR)
     sock.listen(4)
     return sock
 
@@ -39,6 +38,8 @@ def response_ok(_body):
     You will update your response_ok function to accomplish this task.
     """
 
+    _DATE = email.Utils.formatdate(usegmt=True)
+
     _RESPONSE_TEMPLATE = _CRLF.join([
         b"HTTP/1.1 200 OK",
         b"{date}",
@@ -52,7 +53,7 @@ def response_ok(_body):
     _RESPONSE_TEMPLATE
 
     return _RESPONSE_TEMPLATE.format(
-        date=date,
+        date=_DATE,
         content_type='image',
         content_length='something',
         content_body=_body
@@ -62,9 +63,11 @@ def response_ok(_body):
 def response_error(header, text):
     """Return Header and Body information for three types of errors"""
 
+    _DATE = email.Utils.formatdate(usegmt=True)
+
     response_headers = (
         header +
-        date +
+        _DATE +
         b'Content-Type: text/html\r\n'
         b'Content-Length:\r\n')
 
