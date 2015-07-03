@@ -114,37 +114,41 @@ def echo(socket, address):
                 parsed_response = parse_request(msg)
                 body, content_type = resolve_uri(parsed_response)
             except NotImplementedError:
-                client_response = response_error(
+                server_response = response_error(
                     b"HTTP/1.1 405 Method Not Allowed\r\n",
                     b"GET method required.\r\n"
                 )
             except NameError:
-                client_response = response_error(
+                server_response = response_error(
                     b"HTTP/1.1 400 Bad Request\r\n",
                     b"Not a valid HTTP/1.1 request.\r\n"
                 )
             except ValueError:
-                client_response = response_error(
+                server_response = response_error(
                     b"HTTP/1.1 406 Not Acceptable\r\n",
                     b"'Host' header required.\r\n"
                 )
             except OSError:
-                client_response = response_error(
+                server_response = response_error(
                     b"HTTP/1.1 420 Enhance Your Calm\r\n",
                     b"Keyboard Driver Error\r\n"
                 )
-            client_response = response_ok(body, content_type)
-            socket.sendall(client_response)
+            server_response = response_ok(body, content_type)
+            socket.sendall(server_response)
             socket.close()
         else:
             break
     print(msg)
 
 
-if __name__ == '__main__':
+def run_gevent_server():
     from gevent.server import StreamServer
     from gevent.monkey import patch_all
     patch_all()
     gserver = StreamServer(('127.0.0.1', 8000), echo)
     print("starting server")
     gserver.serve_forever()
+
+
+if __name__ == '__main__':
+    run_gevent_server()
