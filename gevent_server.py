@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 import email
 import os
+import sys
 import mimetypes
 
 addr = ("127.0.0.1", 8000)
@@ -10,20 +11,8 @@ _CRLF = b"\r\n"
 
 
 def response_ok(_body, _type):
-    """
-    Ensure that the body of the requested resource is returned in a "200 OK"
-    response.
 
-    The response should include the appropriate header to indicate the type
-    of resource being returned.
-
-    The response should also include the appropriate header to indicate the
-    amount of content being returned.
-
-    The response should include any other valid HTTP headers you wish to add.
-
-    You will update your response_ok function to accomplish this task.
-    """
+    _date = email.Utils.formatdate(usegmt=True)
 
     _RESPONSE_TEMPLATE = _CRLF.join([
         b"HTTP/1.1 200 OK",
@@ -35,62 +24,56 @@ def response_ok(_body, _type):
         b"",
     ])
 
-    _RESPONSE_TEMPLATE
-
     return _RESPONSE_TEMPLATE.format(
-        date=date,
+        date=_date,
         content_type=_type,
-        content_length='something',
+        content_length=str(sys.getsizeof(_body)),
         content_body=_body
     )
 
 
-def response_error(header, text):
+def response_error(status_code, reason_phrase, content_body):
     """Return Header and Body information for three types of errors"""
 
-    response_headers = (
-        header +
-        date +
-        b'Content-Type: text/html\r\n'
-        b'Content-Length:\r\n')
+    date = email.Utils.formatdate(usegmt=True)
 
-    response_body = (
-        b'<html><body>'
-        b'<p>' + text + '</p>'
-        b'</body></html>')
+    _RESPONSE_TEMPLATE = _CRLF.join([
+        b"HTTP/1.1 {status_code} {reason_phrase}",
+        b"{date}",
+        b"Content-Type: text/html",
+        b"Content-Length: {content_length}",
+        b"",
+        b"<html><body><p>{content_body}</p></body></html>",
+        b"",
+    ])
 
-    return response_headers + response_body
+    return _RESPONSE_TEMPLATE.format(
+        status_code=status_code,
+        reason_phrase=reason_phrase,
+        date=date,
+        content_length=str(sys.getsizeof(content_body)),
+        content_body=content_body
+    )
 
 
 def parse_request(request):
-    """
-    NOTES:
-
-    Use `.split(< 2 CRLF's >, 1)` to separate the header chunk from the
-    body chunk, since they must always be separated by two CRLFs.
-    Additionally, the second optional argument to .split() is the number
-    of times to split. This way, we avoid dealing with a situation where
-    the body contains double CRLFs.
-
-    Then, for processing headers, use .split() without args, which will
-    strip at *any* intersituated whitespace, whereas .split(' ') will
-    split at *each individual* whitespace.
-    """
-    client_req = request.split('\r\n')
-    meth = client_req[0].split(' ')
+    client_req = request.split((2 * _CRLF), 1)
+    head_chunk = client_req[0].split(_CRLF)
+    first_line = head_chunk[0].split()
     host = ''
-    for item in client_req:
+
+    for item in head_chunk:
         if "Host: " in item:
             host = item
 
-    if 'GET' != meth[0]:
+    if 'GET' != first_line[0]:
         raise NotImplementedError('That is not a valid GET request')
-    elif 'HTTP/1.1' != meth[2]:
+    elif 'HTTP/1.1' != first_line[2]:
         raise NameError('That is not a valid HTTP/1.1 request')
     elif 'Host: ' not in host:
         raise ValueError('The required Host header is not present')
     else:
-        return meth[1]
+        return first_line[1]
 
 
 def resolve_uri(parse):
