@@ -87,7 +87,8 @@ def resolve_uri(parse):
     root = os.path.join(os.getcwd(), 'webroot')
     body = ''
     content_type = ''
-    if os.path.isdir(os.path.join(root, parse)):
+    uri = os.path.join(root, parse)
+    if os.path.isdir(uri):
         body = '<!DOCTYPE html><html><body><ul>'
         for file_ in os.listdir(root + parse):
             body += '<li>' + file_ + '</li>'
