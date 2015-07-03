@@ -71,21 +71,23 @@ def response_error(status_code, reason_phrase, content_body):
 
 
 def parse_request(request):
-    client_req = request.split('\r\n')
-    meth = client_req[0].split(' ')
+    client_req = request.split((2 * _CRLF), 1)
+    head_chunk = client_req[0].split(_CRLF)
+    first_line = head_chunk[0].split()
     host = ''
-    for item in client_req:
+
+    for item in head_chunk:
         if "Host: " in item:
             host = item
 
-    if 'GET' != meth[0]:
+    if 'GET' != first_line[0]:
         raise NotImplementedError('That is not a valid GET request')
-    elif 'HTTP/1.1' != meth[2]:
+    elif 'HTTP/1.1' != first_line[2]:
         raise NameError('That is not a valid HTTP/1.1 request')
     elif 'Host: ' not in host:
         raise ValueError('The required Host header is not present')
     else:
-        return meth[1]
+        return first_line[1]
 
 
 def resolve_uri(parse):
