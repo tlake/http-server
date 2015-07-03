@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import socket
 import email
 import os
+import sys
 import mimetypes
 
 ADDR = ("127.0.0.1", 8000)
@@ -40,7 +41,7 @@ def response_ok(_body, _type):
     return _RESPONSE_TEMPLATE.format(
         date=_date,
         content_type=_type,
-        content_length='something',
+        content_length=str(sys.getsizeof(_body)),
         content_body=_body
     )
 
