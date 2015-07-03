@@ -105,17 +105,16 @@ def test_client_receives_sample_txt_on_request(client_setup):
 def test_client_receives_root_filesystem(client_setup):
     client = client_setup
     client.sendall(b"GET / HTTP/1.1\r\nHost: www.host.com:80\r\n\r\n")
-    expected_response = (
-        '<!DOCTYPE html><html>'
-        '<body><ul><li>a_web_page.html</li>'
-        '<li>sample.txt</li><li>make_time.py</li>'
+    expected_response = [
+        '<li>a_web_page.html</li>',
+        '<li>sample.txt</li>',
+        '<li>make_time.py</li>',
         '<li>images</li>'
-        '</ul></body></html>'
-
-    )
+    ]
     server_response = client.recv(4096)
     client.close()
-    assert expected_response in server_response
+    for line in expected_response:
+        assert line in server_response
 
 
 def test_client_receives_error_on_not_get(client_setup):
