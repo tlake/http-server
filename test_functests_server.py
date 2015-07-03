@@ -10,13 +10,38 @@ from multiprocessing import Process
 addr = ("127.0.0.1", 8000)
 
 
-@pytest.yield_fixture(scope='module', autouse=True)
-def server_setup():
+# yield fixtures are demons
+
+# We used to have a yield fixture here and in the gevent_server.py tests
+# which would start up the server and keep it going, I thought, until
+# the end of its scope. Since these server fixtures were scoped to
+# module, we believed they would terminate at the end of the module.
+# The theory seemed to hold true through the end of Step 3, since we
+# only ever started one server throughout the entire testing process.
+# Once we created the gevent server, there were within the test suite
+# two different server creation fixtures, both scoped to module. We
+# falsely believed that each of these fixtures would terminate at the
+# end of the module. In practice, it seems that a yield fixture doesn't
+# terminate until the end of the entire testing session, regardless
+# of defined scope.
+
+# The solution, seen below, is to use just a regular fixture with
+# a process-terminating finalizer. The scope behaves properly,
+# and autouse also still works.
+
+
+@pytest.fixture(scope='module', autouse=True)
+def gevent_server_setup(request):
     process = Process(target=server.run_server)
     process.daemon = True
     process.start()
     time.sleep(0.1)
-    yield process
+
+    def cleanup():
+        process.terminate()
+
+    request.addfinalizer(cleanup)
+    return process
 
 
 @pytest.fixture(scope='function')
@@ -95,7 +120,7 @@ def test_client_receives_root_filesystem(client_setup):
 
 def test_client_receives_error_on_not_get(client_setup):
     client = client_setup
-    client.sendall(b"DELETE / HTTP/1.1\r\nHost: www.host.com:80\r\n\r\n")
+    client.sendall(b"POST / HTTP/1.1\r\nHost: www.host.com:80\r\n\r\n")
     expected_response = (b"405 Method Not Allowed")
     server_response = client.recv(4096)
     client.close()
