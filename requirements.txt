@@ -1,1 +1,5 @@
+gevent==1.0.2
+greenlet==0.4.7
 ipython==3.2.0
+py==1.4.30
+pytest==2.7.2
