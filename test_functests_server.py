@@ -100,3 +100,30 @@ def test_client_receives_error_on_not_get(client_setup):
     server_response = client.recv(4096)
     client.close()
     assert expected_response in server_response
+
+
+def test_client_receives_error_on_bad_request(client_setup):
+    client = client_setup
+    client.sendall(b"GET / HTTP/1.9\r\nHost: www.host.com:80\r\n\r\n")
+    expected_response = (b"400 Bad Request")
+    server_response = client.recv(4096)
+    client.close()
+    assert expected_response in server_response
+
+
+def test_client_receives_error_on_no_host(client_setup):
+    client = client_setup
+    client.sendall(b"GET / HTTP/1.1\r\n\r\n")
+    expected_response = (b"406 Not Acceptable")
+    server_response = client.recv(4096)
+    client.close()
+    assert expected_response in server_response
+
+
+def test_client_receives_error_on_bad_uri(client_setup):
+    client = client_setup
+    client.sendall(b"GET /sadsge HTTP/1.1\r\nHost: www.host.com:80\r\n\r\n")
+    expected_response = (b"420 Resource Not Found")
+    server_response = client.recv(4096)
+    client.close()
+    assert expected_response in server_response
