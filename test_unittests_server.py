@@ -9,10 +9,22 @@ import pytest
 ################
 
 
-# Implement a function called parse_request
-# The function should take a single argument which is the request from the
-# client. The function should only accept GET requests, any other request
-# should raise an appropriate Python error
+def test_response_ok():
+    response = server.response_ok(b"123456789", "text/plain")
+    assert "text/plain" in response
+    assert '46' in response
+
+
+def test_response_error():
+    response = server.response_error(
+        b"HTTP/1.1 405 Method Not Allowed\r\n",
+        b"GET method required.\r\n"
+    )
+    assert b"GET method required" in response
+    assert b"text/html" in response
+    assert b"</body>" in response
+
+
 def test_parse_request_rejects_non_get():
     with pytest.raises(NotImplementedError):
         server.parse_request(
@@ -22,8 +34,6 @@ def test_parse_request_rejects_non_get():
         )
 
 
-# The function should only accept HTTP/1.1 requests, a request of any other
-# protocol should raise an appropriate Python error
 def test_parse_request_rejects_non_http_1_1():
     with pytest.raises(Exception):
         server.parse_request(
@@ -33,8 +43,6 @@ def test_parse_request_rejects_non_http_1_1():
         )
 
 
-# The function should validate that a proper Host header was included in the
-# request, if not, raise an appropriate Python error
 def test_parse_request_rejects_absent_host_header():
     with pytest.raises(ValueError):
         server.parse_request(
@@ -45,8 +53,6 @@ def test_parse_request_rejects_absent_host_header():
         )
 
 
-# If none of the conditions above arise, then the function should return the
-# URI from the clients request
 def test_parse_request_returns_validated_request():
     valid_request = (
         b"GET /heres/the/URI HTTP/1.1\r\n"
@@ -56,3 +62,14 @@ def test_parse_request_returns_validated_request():
         b"\r\n"
     )
     assert b"/heres/the/URI" == server.parse_request(valid_request)
+
+
+def test_resolve_uri_success():
+    body, content_type = server.resolve_uri(b'/sample.txt')
+    assert b"simple text file" in body
+    assert b"text" in content_type
+
+
+def test_resolve_uri_failure():
+    with pytest.raises(OSError):
+        server.resolve_uri(b"laskjdhfku")
