@@ -8,6 +8,7 @@ from multiprocessing import Process
 
 
 addr = ("127.0.0.1", 8000)
+_CRLF = b'\r\n'
 
 
 # yield fixtures are demons
@@ -65,17 +66,18 @@ def client_setup():
 
 def test_client_receives_ok_on_image_request(client_setup):
     client = client_setup
-    client.sendall(
-        b"GET /images/sample_1.png HTTP/1.1\r\n"
-        b"Host: www.host.com:80\r\n"
-        b"\r\n"
-    )
+    client.sendall(_CRLF.join([
+        b"GET /images/sample_1.png HTTP/1.1"
+        b"Host: www.host.com:80"
+        b""
+    ]))
     ok_header = b"HTTP/1.1 200 OK"
     server_response = client.recv(4096)
     client.close()
     assert ok_header in server_response
     content_type = b'image'
     assert content_type in server_response
+    assert 2 * _CRLF in server_response
 
 
 def test_client_receives_ok_on_textfile_request(client_setup):
