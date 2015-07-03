@@ -58,6 +58,10 @@ def client_setup():
 # FUNCTIONAL TESTS
 ################
 
+# is the content length header correct? Is the content type header
+# correct? Does the proper separator come between the head and
+# the body of the response?
+
 
 def test_client_receives_ok_on_image_request(client_setup):
     client = client_setup
@@ -70,6 +74,8 @@ def test_client_receives_ok_on_image_request(client_setup):
     server_response = client.recv(4096)
     client.close()
     assert ok_header in server_response
+    content_type = b'image'
+    assert content_type in server_response
 
 
 def test_client_receives_ok_on_textfile_request(client_setup):

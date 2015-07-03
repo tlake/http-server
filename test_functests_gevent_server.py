@@ -70,6 +70,8 @@ def test_client_receives_ok_on_image_request(client_setup):
     server_response = client.recv(4096)
     client.close()
     assert ok_header in server_response
+    content_type = b'image'
+    assert content_type in server_response
 
 
 def test_client_receives_ok_on_textfile_request(client_setup):
