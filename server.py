@@ -47,7 +47,7 @@ def response_ok(_body, _type):
 
 
 def response_error(status_code, reason_phrase, content_body):
-    """Return Header and Body information for three types of errors"""
+    """Zip together arguments for returning an error response"""
 
     date = email.Utils.formatdate(usegmt=True)
 
