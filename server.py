@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import socket
 import email
 import os
+import mimetypes
 
 addr = ("127.0.0.1", 8000)
 date = email.Utils.formatdate(usegmt=True)
@@ -23,7 +24,7 @@ def setup():
     return sock
 
 
-def response_ok(_body):
+def response_ok(_body, _type):
     """
     Ensure that the body of the requested resource is returned in a "200 OK"
     response.
@@ -53,7 +54,7 @@ def response_ok(_body):
 
     return _RESPONSE_TEMPLATE.format(
         date=date,
-        content_type='image',
+        content_type=_type,
         content_length='something',
         content_body=_body
     )
@@ -108,23 +109,22 @@ def parse_request(request):
 
 
 def resolve_uri(parse):
-    if os.path.exists(parse):
-        if os.path.isdir(parse):
-            cwd = os.getcwd()
-            dir_path = os.path.join(cwd, parse)
-            dir_list = ', '.join(os.listdir(dir_path))
-            _body = (b'<http><body>'
-                     b'<p>' + dir_list + '</p>'
-                     b'</body></html>   ')
-            _type = b'content-type: text/html'
-            response = _body + _type
-        elif os.path.isfile(parse):
-            cwd = os.getcwd()
-            file_path = os.path.join(cwd, parse)
-            response = open(file_path).read()
-        return response
+    root = os.path.join(os.getcwd(), 'webroot')
+    body = ''
+    content_type = ''
+    if os.path.isdir(root + parse):
+        body = '<!DOCTYPE html><html><body><ul>'
+        for file_ in os.listdir(root + parse):
+            body += '<li>' + file_ + '</li>'
+        body += '</ul></body></html>'
+        content_type = 'text/html'
+    elif os.path.isfile(root + parse):
+        with open((root + parse), 'rb') as file_:
+            body = file_.read()
+        content_type, encoding = mimetypes.guess_type(parse)
     else:
-        return OSError
+        raise OSError
+    return (body, content_type)
 
 
 def run_server():
@@ -144,10 +144,9 @@ def run_server():
                 msg_recv = conn.recv(4096)
                 msg += msg_recv
                 if len(msg_recv) < 4096:
-                    # import pdb; pdb.set_trace()
                     try:
                         parsed_response = parse_request(msg)
-                        client_response = resolve_uri(parsed_response)
+                        body, content_type = resolve_uri(parsed_response)
                     except NotImplementedError:
                         client_response = response_error(
                             b"HTTP/1.1 405 Method Not Allowed\r\n",
@@ -165,6 +164,7 @@ def run_server():
                         )
                     except OSError:
                         pass
+                    client_response = response_ok(body, content_type)
                     conn.sendall(client_response)
                     conn.close()
                     break
@@ -175,3 +175,28 @@ def run_server():
 
 if __name__ == "__main__":
     run_server()
+
+"""RESP = ("HTTP/1.1 200 OK"
+        "Content-Type: text/plain"
+        ""
+        "hello")
+
+
+def echo(socket, address):
+    buffsize = 16
+    while True:
+        data = socket.recv(buffsize)
+        if len(data) < buffsize:
+            socket.sendall(RESP)
+        else:
+            socket.close()
+            break
+
+
+if __name__ == '__main__':
+    from gevent.server import StreamServer
+    from gevent.monkey import patch_all
+    patch_all()
+    server = StreamServer(('127.0.0.1', 8000), echo)
+    print("starting server")
+"""
