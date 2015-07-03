@@ -87,7 +87,7 @@ def resolve_uri(parse):
     root = os.path.join(os.getcwd(), 'webroot')
     body = ''
     content_type = ''
-    if os.path.isdir(root + parse):
+    if os.path.isdir(os.path.join(root, parse)):
         body = '<!DOCTYPE html><html><body><ul>'
         for file_ in os.listdir(root + parse):
             body += '<li>' + file_ + '</li>'
@@ -98,7 +98,7 @@ def resolve_uri(parse):
             body = file_.read()
         content_type, encoding = mimetypes.guess_type(parse)
     else:
-        raise OSError
+        raise IOError
     return (body, content_type)
 
 
@@ -141,11 +141,11 @@ def run_server():
                             b"Not Acceptable",
                             b"'Host' header required."
                         )
-                    except OSError:
+                    except IOError:
                         server_response = response_error(
-                            b"420",
-                            b"Enhance Your Calm",
-                            b"Keyboard Driver Error"
+                            b"404",
+                            b"Not Found",
+                            b"Requested resource does not exist."
                         )
                     conn.sendall(server_response)
                     conn.close()

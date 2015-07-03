@@ -72,5 +72,5 @@ def test_resolve_uri_success():
 
 
 def test_resolve_uri_failure():
-    with pytest.raises(OSError):
+    with pytest.raises(IOError):
         gevent_server.resolve_uri(b"laskjdhfku")

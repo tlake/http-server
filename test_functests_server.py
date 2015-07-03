@@ -147,7 +147,7 @@ def test_client_receives_error_on_no_host(client_setup):
 def test_client_receives_error_on_bad_uri(client_setup):
     client = client_setup
     client.sendall(b"GET /sadsge HTTP/1.1\r\nHost: www.host.com:80\r\n\r\n")
-    expected_response = (b"420 Enhance Your Calm")
+    expected_response = (b"404 Not Found")
     server_response = client.recv(4096)
     client.close()
     assert expected_response in server_response
