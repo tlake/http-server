@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-import socket
 import email
 import os
 import mimetypes
@@ -8,20 +7,6 @@ import mimetypes
 addr = ("127.0.0.1", 8000)
 date = email.Utils.formatdate(usegmt=True)
 _CRLF = b"\r\n"
-
-
-def setup():
-    """
-    Create new socket, and bind localhost to socket.
-    Set socket to listen, and return socket information.
-    """
-    sock = socket.socket(
-        socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_IP
-    )
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.bind(addr)
-    sock.listen(2)
-    return sock
 
 
 def response_ok(_body, _type):
@@ -127,79 +112,56 @@ def resolve_uri(parse):
     return (body, content_type)
 
 
-def run_server():
+def echo(socket, address):
     """
     Create new instance of server, and begin accepting, logging,
     and returning response.
     """
-    server = setup()
+    buffsize = 1024
+    msg = ''
+    # Better to use a list and then join.
     while True:
-        try:
-            conn, addr = server.accept()
-            msg = ''
-            while True:
-                """
-                If response in msg, can use this to return Ok or Error
-                """
-                msg_recv = conn.recv(4096)
-                msg += msg_recv
-                if len(msg_recv) < 4096:
-                    try:
-                        parsed_response = parse_request(msg)
-                        body, content_type = resolve_uri(parsed_response)
-                    except NotImplementedError:
-                        client_response = response_error(
-                            b"HTTP/1.1 405 Method Not Allowed\r\n",
-                            b"GET method required.\r\n"
-                        )
-                    except NameError:
-                        client_response = response_error(
-                            b"HTTP/1.1 400 Bad Request\r\n",
-                            b"Not a valid HTTP/1.1 request.\r\n"
-                        )
-                    except ValueError:
-                        client_response = response_error(
-                            b"HTTP/1.1 406 Not Acceptable\r\n",
-                            b"'Host' header required.\r\n"
-                        )
-                    except OSError:
-                        client_response = response_error(
-                            b"HTTP/1.1 420 Enhance Your Calm\r\n",
-                            b"Keyboard Driver Error\r\n"
-                        )
-                    client_response = response_ok(body, content_type)
-                    conn.sendall(client_response)
-                    conn.close()
-                    break
-            print(msg)
-        except KeyboardInterrupt:
-            break
-
-
-if __name__ == "__main__":
-    run_server()
-
-"""RESP = ("HTTP/1.1 200 OK"
-        "Content-Type: text/plain"
-        ""
-        "hello")
-
-
-def echo(socket, address):
-    buffsize = 16
-    while True:
-        data = socket.recv(buffsize)
-        if len(data) < buffsize:
-            socket.sendall(RESP)
-        else:
+        """
+        If response in msg, can use this to return Ok or Error
+        """
+        msg_recv = socket.recv(buffsize)
+        msg += msg_recv
+        if len(msg_recv) < buffsize:
+            try:
+                parsed_response = parse_request(msg)
+                body, content_type = resolve_uri(parsed_response)
+            except NotImplementedError:
+                client_response = response_error(
+                    b"HTTP/1.1 405 Method Not Allowed\r\n",
+                    b"GET method required.\r\n"
+                )
+            except NameError:
+                client_response = response_error(
+                    b"HTTP/1.1 400 Bad Request\r\n",
+                    b"Not a valid HTTP/1.1 request.\r\n"
+                )
+            except ValueError:
+                client_response = response_error(
+                    b"HTTP/1.1 406 Not Acceptable\r\n",
+                    b"'Host' header required.\r\n"
+                )
+            except OSError:
+                client_response = response_error(
+                    b"HTTP/1.1 420 Enhance Your Calm\r\n",
+                    b"Keyboard Driver Error\r\n"
+                )
+            client_response = response_ok(body, content_type)
+            socket.sendall(client_response)
             socket.close()
+        else:
             break
+    print(msg)
 
 
 if __name__ == '__main__':
     from gevent.server import StreamServer
     from gevent.monkey import patch_all
     patch_all()
-    server = StreamServer(('127.0.0.1', 8000), echo)
+    gserver = StreamServer(('127.0.0.1', 8000), echo)
     print("starting server")
-"""
+    gserver.serve_forever()
