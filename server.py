@@ -162,28 +162,3 @@ def run_server():
 
 if __name__ == "__main__":
     run_server()
-
-"""RESP = ("HTTP/1.1 200 OK"
-        "Content-Type: text/plain"
-        ""
-        "hello")
-
-
-def echo(socket, address):
-    buffsize = 16
-    while True:
-        data = socket.recv(buffsize)
-        if len(data) < buffsize:
-            socket.sendall(RESP)
-        else:
-            socket.close()
-            break
-
-
-if __name__ == '__main__':
-    from gevent.server import StreamServer
-    from gevent.monkey import patch_all
-    patch_all()
-    server = StreamServer(('127.0.0.1', 8000), echo)
-    print("starting server")
-"""
