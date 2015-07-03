@@ -113,30 +113,33 @@ def echo(socket, address):
             try:
                 parsed_response = parse_request(msg)
                 body, content_type = resolve_uri(parsed_response)
+                server_response = response_ok(body, content_type)
             except NotImplementedError:
                 server_response = response_error(
-                    b"HTTP/1.1 405 Method Not Allowed\r\n",
-                    b"GET method required.\r\n"
+                    b"405",
+                    b"Method Not Allowed",
+                    b"GET method required."
                 )
             except NameError:
                 server_response = response_error(
-                    b"HTTP/1.1 400 Bad Request\r\n",
-                    b"Not a valid HTTP/1.1 request.\r\n"
+                    b"400",
+                    b"Bad Request",
+                    b"Not a valid HTTP/1.1 request."
                 )
             except ValueError:
                 server_response = response_error(
-                    b"HTTP/1.1 406 Not Acceptable\r\n",
-                    b"'Host' header required.\r\n"
+                    b"406",
+                    b"Not Acceptable",
+                    b"'Host' header required."
                 )
             except OSError:
                 server_response = response_error(
-                    b"HTTP/1.1 420 Enhance Your Calm\r\n",
-                    b"Keyboard Driver Error\r\n"
+                    b"420",
+                    b"Enhance Your Calm",
+                    b"Keyboard Driver Error"
                 )
-            server_response = response_ok(body, content_type)
             socket.sendall(server_response)
             socket.close()
-        else:
             break
     print(msg)
 
