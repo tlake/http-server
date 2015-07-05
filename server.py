@@ -3,7 +3,8 @@ from __future__ import unicode_literals
 import socket
 import email
 import os
-import sys
+from pathlib import Path
+# import sys
 import mimetypes
 
 ADDR = ("127.0.0.1", 8000)
@@ -90,27 +91,59 @@ def parse_request(request):
 def resolve_uri(parse):
     if '..' in parse:
         raise IOError
-    # import pdb; pdb.set_trace()
     here = os.path.dirname(os.path.abspath(__file__))
     root = os.path.join(here, 'webroot')
-    body = ''
-    content_type = ''
-    uri = os.path.join(root, parse)
-    if os.path.isdir(uri):
-        body = '<DOCTYPE html><html><body><ul>'
-        for file_ in os.listdir(root + parse):
-            body += '<li>' + file_ + '</li>'
-        body += '</ul></body></html>'
-        content_type = 'text/html'
+
+    path = Path(root + parse)
+    if not path.exists():
+        raise LookupError(b'Not Found')
+
+    body = b''
+    content_type = b''
+    if path.is_dir():
+        # import pdb; pdb.set_trace()
+        gen = path.iterdir()
+        html_start = b"<!DOCTYPE html><html><body><ul>"
+        body = _CRLF.join(
+            [b"<li>{item}</li>".format(item=item) for item in gen]
+        )
+        html_end = b"</ul></body></html>"
+        body = "".join([html_start, body, html_end])
+        content_type = b'text/html'
+
     elif os.path.isfile(root + parse):
-        with open((root + parse), 'rb') as file_:
-            body = file_.read()
-        content_type, encoding = mimetypes.guess_type(parse)
+        with path.open('rb') as f:
+            body = f.read()
+            content_type, encoding = mimetypes.guess_type(parse)[0]
     else:
         raise IOError
-    body = bytes(body)
-    content_type = bytes(content_type)
     return (body, content_type)
+
+
+# def resolve_uri(parse):
+#     if '..' in parse:
+#         raise IOError
+#     here = os.path.dirname(os.path.abspath(__file__))
+#     root = os.path.join(here, 'webroot')
+#     import pdb; pdb.set_trace()
+#     body = ''
+#     content_type = ''
+#     uri = os.path.join(root, parse)
+#     if os.path.isdir(uri):
+#         body = '<DOCTYPE html><html><body><ul>'
+#         for file_ in os.listdir(root + parse):
+#             body += '<li>' + file_ + '</li>'
+#         body += '</ul></body></html>'
+#         content_type = 'text/html'
+#     elif os.path.isfile(root + parse):
+#         with open((root + parse), 'rb') as file_:
+#             body = file_.read()
+#         content_type, encoding = mimetypes.guess_type(parse)
+#     else:
+#         raise IOError
+#     body = bytes(body)
+#     content_type = bytes(content_type)
+#     return (body, content_type)
 
 
 def run_server():
