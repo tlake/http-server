@@ -37,12 +37,8 @@ def response_ok(body_plugin, content_type):
     """Zip together arguments for returning an OK response"""
 
     _date = email.Utils.formatdate(usegmt=True)
-    content_body = _CRLF.join([
-        b"<!DOCTYPE html><html><body><p>",
-        b"{body_plugin}",
-        b"</p></body></html>"
-    ])
-    content_body.format(body_plugin=body_plugin)
+    content_body = b"{body_plugin}"
+    content_body = content_body.format(body_plugin=body_plugin)
 
     return _RESPONSE_TEMPLATE.format(
         status_code=b"200",
@@ -58,12 +54,8 @@ def response_error(status_code, reason_phrase, body_plugin):
     """Zip together arguments for returning an error response"""
 
     date = email.Utils.formatdate(usegmt=True)
-    content_body = _CRLF.join([
-        b"<!DOCTYPE html><html><body><p>",
-        b"{body_plugin}",
-        b"</p></body></html>"
-    ])
-    content_body.format(body_plugin=body_plugin)
+    content_body = b"{body_plugin}"
+    content_body = content_body.format(body_plugin=body_plugin)
 
     return _RESPONSE_TEMPLATE.format(
         status_code=status_code,
@@ -105,10 +97,10 @@ def resolve_uri(parse):
     content_type = ''
     uri = os.path.join(root, parse)
     if os.path.isdir(uri):
-        body = '<ul>'
+        body = '<DOCTYPE html><html><body><ul>'
         for file_ in os.listdir(root + parse):
             body += '<li>' + file_ + '</li>'
-        body += '</ul>'
+        body += '</ul></body></html>'
         content_type = 'text/html'
     elif os.path.isfile(root + parse):
         with open((root + parse), 'rb') as file_:
