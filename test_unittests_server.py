@@ -74,3 +74,15 @@ def test_resolve_uri_success():
 def test_resolve_uri_failure():
     with pytest.raises(IOError):
         server.resolve_uri(b"laskjdhfku")
+
+
+def test_resolve_uri_fails_given_dots():
+    with pytest.raises(IOError):
+        req = (
+            b"GET /../heres/the/URI HTTP/1.1\r\n"
+            b"Host: www.example.com\r\n"
+            b"\r\n"
+            b"blah blah some kind of body\r\n"
+            b"\r\n"
+        )
+        server.resolve_uri(req)
