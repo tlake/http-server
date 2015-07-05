@@ -13,9 +13,9 @@ _RESPONSE_TEMPLATE = _CRLF.join([
     b"{date}",
     b"Content-Type: {content_type}",
     b"Content-Length: {content_length}",
-    b"",
-    b"<html><body><p>{content_body}</p></body></html>",
-    b"",
+    _CRLF,
+    b"<!DOCTYPE html><html><body><p>{content_body}</p></body></html>",
+    _CRLF,
 ])
 
 
@@ -43,7 +43,7 @@ def response_ok(_body, _type):
         reason_phrase=b"OK",
         date=_date,
         content_type=_type,
-        content_length=str(sys.getsizeof(_body)),
+        content_length=bytes(sys.getsizeof(_body)),
         content_body=_body
     )
 
@@ -57,7 +57,7 @@ def response_error(status_code, reason_phrase, content_body):
         status_code=status_code,
         reason_phrase=reason_phrase,
         date=date,
-        content_type=b'text/plain',
+        content_type=b'text/html',
         content_length=str(sys.getsizeof(content_body)),
         content_body=content_body
     )
@@ -104,6 +104,8 @@ def resolve_uri(parse):
         content_type, encoding = mimetypes.guess_type(parse)
     else:
         raise IOError
+    body = bytes(body)
+    content_type = bytes(content_type)
     return (body, content_type)
 
 
