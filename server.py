@@ -14,7 +14,7 @@ _RESPONSE_TEMPLATE = _CRLF.join([
     b"Content-Type: {content_type}",
     b"Content-Length: {content_length}",
     _CRLF,
-    b"<!DOCTYPE html><html><body><p>{content_body}</p></body></html>",
+    b"{content_body}",
     _CRLF,
 ])
 
@@ -33,32 +33,42 @@ def setup():
     return sock
 
 
-def response_ok(_body, _type):
+def response_ok(body_plugin, content_type):
     """Zip together arguments for returning an OK response"""
 
     _date = email.Utils.formatdate(usegmt=True)
+    content_body = (
+        b"<!DOCTYPE html><html><body><p>",
+        b"{body_plugin}",
+        b"</p></body></html>"
+    )
 
     return _RESPONSE_TEMPLATE.format(
         status_code=b"200",
         reason_phrase=b"OK",
         date=_date,
-        content_type=_type,
-        content_length=bytes(sys.getsizeof(_body)),
-        content_body=_body
+        content_type=content_type,
+        content_length=len(content_body),
+        content_body=content_body
     )
 
 
-def response_error(status_code, reason_phrase, content_body):
+def response_error(status_code, reason_phrase, body_plugin):
     """Zip together arguments for returning an error response"""
 
     date = email.Utils.formatdate(usegmt=True)
+    content_body = (
+        b"<!DOCTYPE html><html><body><p>",
+        b"{body_plugin}",
+        b"</p></body></html>"
+    )
 
     return _RESPONSE_TEMPLATE.format(
         status_code=status_code,
         reason_phrase=reason_phrase,
         date=date,
         content_type=b'text/html',
-        content_length=str(sys.getsizeof(content_body)),
+        content_length=len(content_body),
         content_body=content_body
     )
 
@@ -93,10 +103,10 @@ def resolve_uri(parse):
     content_type = ''
     uri = os.path.join(root, parse)
     if os.path.isdir(uri):
-        body = '<!DOCTYPE html><html><body><ul>'
+        body = '<ul>'
         for file_ in os.listdir(root + parse):
             body += '<li>' + file_ + '</li>'
-        body += '</ul></body></html>'
+        body += '</ul>'
         content_type = 'text/html'
     elif os.path.isfile(root + parse):
         with open((root + parse), 'rb') as file_:
