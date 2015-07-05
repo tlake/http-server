@@ -12,7 +12,7 @@ _RESPONSE_TEMPLATE = _CRLF.join([
     b"HTTP/1.1 {status_code} {reason_phrase}",
     b"{date}",
     b"Content-Type: {content_type}",
-    b"Content-Length: {content_length}",
+    # b"Content-Length: {content_length}",
     _CRLF,
     b"{content_body}",
     _CRLF,
@@ -37,18 +37,19 @@ def response_ok(body_plugin, content_type):
     """Zip together arguments for returning an OK response"""
 
     _date = email.Utils.formatdate(usegmt=True)
-    content_body = (
+    content_body = _CRLF.join([
         b"<!DOCTYPE html><html><body><p>",
         b"{body_plugin}",
         b"</p></body></html>"
-    )
+    ])
+    content_body.format(body_plugin=body_plugin)
 
     return _RESPONSE_TEMPLATE.format(
         status_code=b"200",
         reason_phrase=b"OK",
         date=_date,
         content_type=content_type,
-        content_length=len(content_body),
+        # content_length=sys.getsizeof(content_body),
         content_body=content_body
     )
 
@@ -57,18 +58,19 @@ def response_error(status_code, reason_phrase, body_plugin):
     """Zip together arguments for returning an error response"""
 
     date = email.Utils.formatdate(usegmt=True)
-    content_body = (
+    content_body = _CRLF.join([
         b"<!DOCTYPE html><html><body><p>",
         b"{body_plugin}",
         b"</p></body></html>"
-    )
+    ])
+    content_body.format(body_plugin=body_plugin)
 
     return _RESPONSE_TEMPLATE.format(
         status_code=status_code,
         reason_phrase=reason_phrase,
         date=date,
         content_type=b'text/html',
-        content_length=len(content_body),
+        # content_length=sys.getsizeof(content_body),
         content_body=content_body
     )
 
