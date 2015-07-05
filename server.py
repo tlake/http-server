@@ -72,7 +72,7 @@ def parse_request(request):
     for item in head_chunk:
         if "Host: " in item:
             host = item
-
+    import pdb; pdb.set_trace()
     if 'GET' != first_line[0]:
         raise NotImplementedError('That is not a valid GET request')
     elif 'HTTP/1.1' != first_line[2]:
@@ -83,18 +83,41 @@ def parse_request(request):
         return first_line[1]
 
 
+# def resolve_uri(parse):
+#     root = os.path.join(os.getcwd(), 'webroot')
+#     body = ''
+#     content_type = ''
+#     uri = os.path.join(root, parse)
+#     if os.path.isdir(uri):
+#         body = '<!DOCTYPE html><html><body><ul>'
+#         for file_ in os.listdir(root + parse):
+#             body += '<li>' + file_ + '</li>'
+#         body += '</ul></body></html>'
+#         content_type = 'text/html'
+#     elif os.path.isfile(root + parse):
+#         with open((root + parse), 'rb') as file_:
+#             body = file_.read()
+#         content_type, encoding = mimetypes.guess_type(parse)
+#     else:
+#         raise IOError
+#     return (body, content_type)
+
 def resolve_uri(parse):
-    root = os.path.join(os.getcwd(), 'webroot')
+    approved_dir = '.'
+    root = ''
     body = ''
     content_type = ''
-    uri = os.path.join(root, parse)
-    if os.path.isdir(uri):
+    for dir_name, sub_dir, file_list in os.walk(approved_dir):
+        if parse in dir_name or parse in sub_dir or parse in file_list:
+            root = os.path.abspath(parse)
+
+    if os.path.isdir(root):
         body = '<!DOCTYPE html><html><body><ul>'
-        for file_ in os.listdir(root + parse):
+        for file_ in os.listdir(root):
             body += '<li>' + file_ + '</li>'
         body += '</ul></body></html>'
         content_type = 'text/html'
-    elif os.path.isfile(root + parse):
+    elif os.path.isfile(root):
         with open((root + parse), 'rb') as file_:
             body = file_.read()
         content_type, encoding = mimetypes.guess_type(parse)
