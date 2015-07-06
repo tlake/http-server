@@ -5,7 +5,7 @@ import os
 import sys
 import mimetypes
 
-addr = ("127.0.0.1", 8000)
+ADDR = ("127.0.0.1", 8000)
 _CRLF = b"\r\n"
 _RESPONSE_TEMPLATE = _CRLF.join([
     b"HTTP/1.1 {status_code} {reason_phrase}",
@@ -13,37 +13,45 @@ _RESPONSE_TEMPLATE = _CRLF.join([
     b"Content-Type: {content_type}",
     b"Content-Length: {content_length}",
     b"",
-    b"<html><body><p>{content_body}</p></body></html>",
+    b"{content_body}",
     b"",
 ])
 
 
-def response_ok(_body, _type):
+def response_ok(body_plugin, content_type):
     """Zip together arguments for returning an OK response"""
 
     _date = email.Utils.formatdate(usegmt=True)
+    content_body = b"{body_plugin}"
+    content_body = content_body.format(body_plugin=body_plugin)
 
     return _RESPONSE_TEMPLATE.format(
         status_code=b"200",
         reason_phrase=b"OK",
         date=_date,
-        content_type=_type,
-        content_length=str(sys.getsizeof(_body)),
-        content_body=_body
+        content_type=content_type,
+        content_length=len(bytes(content_body)),
+        content_body=content_body
     )
 
 
-def response_error(status_code, reason_phrase, content_body):
+def response_error(status_code, reason_phrase, body_plugin):
     """Zip together arguments for returning an error response"""
 
     date = email.Utils.formatdate(usegmt=True)
+    content_body = (
+        b"<!DOCTYPE html><html><body><p>"
+        b"{body_plugin}"
+        b"</p></body></html>"
+    )
+    content_body = content_body.format(body_plugin=body_plugin)
 
     return _RESPONSE_TEMPLATE.format(
         status_code=status_code,
         reason_phrase=reason_phrase,
         date=date,
-        content_type=b'text/plain',
-        content_length=str(sys.getsizeof(content_body)),
+        content_type=b'text/html',
+        content_length=len(bytes(content_body)),
         content_body=content_body
     )
 
@@ -69,23 +77,34 @@ def parse_request(request):
 
 
 def resolve_uri(parse):
-    root = os.path.join(os.getcwd(), 'webroot')
-    body = ''
-    content_type = ''
-    uri = os.path.join(root, parse)
+    if '..' in parse:
+        raise IOError
+
+    here = os.path.dirname(os.path.abspath(__file__))
+    root = os.path.join(here, 'webroot')
+    parse = os.path.normpath(parse)
+    uri_parts = parse.split('/')
+    uri = os.path.join(root, *uri_parts)
+
     if os.path.isdir(uri):
-        body = '<!DOCTYPE html><html><body><ul>'
-        for file_ in os.listdir(root + parse):
+        body = '<DOCTYPE html><html><body><ul>'
+
+        for file_ in os.listdir(uri):
             body += '<li>' + file_ + '</li>'
+
         body += '</ul></body></html>'
         content_type = 'text/html'
+
     elif os.path.isfile(root + parse):
-        with open((root + parse), 'rb') as file_:
+        with open(uri, 'rb') as file_:
             body = file_.read()
-        content_type, encoding = mimetypes.guess_type(parse)
+
+        content_type = mimetypes.guess_type(uri)[0]
+
     else:
         raise IOError
-    return (body, content_type)
+
+    return body, content_type
 
 
 def echo(socket, address):

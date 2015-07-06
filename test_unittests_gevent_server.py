@@ -12,7 +12,7 @@ import pytest
 def test_response_ok():
     response = gevent_server.response_ok(b"123456789", "text/plain")
     assert "text/plain" in response
-    assert '46' in response
+    assert '456' in response
 
 
 def test_response_error():
@@ -22,7 +22,7 @@ def test_response_error():
         b"GET method required."
     )
     assert b"GET method required" in response
-    assert b"text/plain" in response
+    assert b"text/html" in response
     assert b"</body>" in response
 
 
