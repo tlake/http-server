@@ -42,3 +42,25 @@ Hints from the team of
 pointed us in the direction of Pytest's
 [`yield_fixture`](https://pytest.org/latest/yieldfixture.html) and the
 [`multiprocessing`](http://pymotw.com/2/multiprocessing/basics.html) module.
+
+
+### Running *Multiple* Servers in the Background
+
+
+Progression to spinning up a gevent server was trivial; extending testing
+to a gevent server was not. In retrospect, all of the tests written for
+the original server.py work perfectly well for gevent_server.py, once a
+couple pointers were properly redirected. The bigger issues, though,
+were the yield fixtures.
+
+We used to have a yield fixture for each of the functional test suites,
+which would start up their respective servers and keep them going, we
+thought, until the end of the yield fixture's scope. Since these server
+fixtures were scoped to `module`, we believed they would terminate at
+the end of the module. In practice, it seems that a yield fixture doesn't
+terminate until the end of the *entire* testing session, regardless
+of defined scope.
+
+The solution - the discovery thereof again facilitated by Jonathan Stallings -
+is to use just a regular fixture with a process-terminating finalizer.
+The scope behaves properly, and autouse also still works.

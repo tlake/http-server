@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-import server
+import gevent_server
 import socket
 import pytest
 import time
@@ -13,7 +13,7 @@ _CRLF = b'\r\n'
 
 # yield fixtures are demons
 
-# We used to have a yield fixture here and in the gevent_server.py tests
+# We used to have a yield fixture here and in the server.py tests
 # which would start up the server and keep it going, I thought, until
 # the end of its scope. Since these server fixtures were scoped to
 # module, we believed they would terminate at the end of the module.
@@ -32,8 +32,8 @@ _CRLF = b'\r\n'
 
 
 @pytest.fixture(scope='module', autouse=True)
-def server_setup(request):
-    process = Process(target=server.run_server)
+def gevent_server_setup(request):
+    process = Process(target=gevent_server.run_gevent_server)
     process.daemon = True
     process.start()
     time.sleep(0.1)
@@ -64,13 +64,10 @@ def verify_response(response):
     assert first_line[1].isdigit()
     assert first_line[2] is not None
 
+
 ################
 # FUNCTIONAL TESTS
 ################
-
-# is the content length header correct? Is the content type header
-# correct? Does the proper separator come between the head and
-# the body of the response?
 
 
 def test_client_receives_ok_on_image_request(client_setup):

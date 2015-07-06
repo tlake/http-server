@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-import socket
 import email
 import os
+import sys
 import mimetypes
 
 ADDR = ("127.0.0.1", 8000)
@@ -16,20 +16,6 @@ _RESPONSE_TEMPLATE = _CRLF.join([
     b"{content_body}",
     b"",
 ])
-
-
-def setup():
-    """
-    Create new socket, and bind localhost to socket.
-    Set socket to listen, and return socket information.
-    """
-    sock = socket.socket(
-        socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_IP
-    )
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.bind(ADDR)
-    sock.listen(4)
-    return sock
 
 
 def response_ok(body_plugin, content_type):
@@ -74,7 +60,6 @@ def parse_request(request):
     client_req = request.split((2 * _CRLF), 1)
     head_chunk = client_req[0].split(_CRLF)
     first_line = head_chunk[0].split()
-
     host = ''
 
     for item in head_chunk:
@@ -85,7 +70,7 @@ def parse_request(request):
         raise NotImplementedError('That is not a valid GET request')
     elif 'HTTP/1.1' != first_line[2]:
         raise NameError('That is not a valid HTTP/1.1 request')
-    elif 'Host:' not in host:
+    elif 'Host: ' not in host:
         raise ValueError('The required Host header is not present')
     else:
         return first_line[1]
@@ -122,68 +107,63 @@ def resolve_uri(parse):
     return body, content_type
 
 
-def run_server():
+def echo(socket, address):
     """
     Create new instance of server, and begin accepting, logging,
     and returning response.
     """
-    server = setup()
+    buffsize = 1024
+    msg = ''
+    # Better to use a list and then join.
     while True:
-        try:
-            conn, addr = server.accept()
-            accum = []
-            while True:
-                """
-                If response in msg, can use this to return Ok or Error
-                """
-                request_part = conn.recv(512)
-                accum.append(request_part)
-                if len(request_part) < 512:
-                    break
-
-            msg = b''.join(accum)
-            print(msg)
-
+        """
+        If response in msg, can use this to return Ok or Error
+        """
+        msg_recv = socket.recv(buffsize)
+        msg += msg_recv
+        if len(msg_recv) < buffsize:
             try:
                 parsed_response = parse_request(msg)
                 body, content_type = resolve_uri(parsed_response)
-                # import pdb; pdb.set_trace()
                 server_response = response_ok(body, content_type)
-
             except NotImplementedError:
                 server_response = response_error(
                     b"405",
                     b"Method Not Allowed",
                     b"GET method required."
                 )
-
             except NameError:
                 server_response = response_error(
                     b"400",
                     b"Bad Request",
                     b"Not a valid HTTP/1.1 request."
                 )
-
             except ValueError:
                 server_response = response_error(
                     b"406",
                     b"Not Acceptable",
                     b"'Host' header required."
                 )
-
             except IOError:
                 server_response = response_error(
                     b"404",
                     b"Not Found",
                     b"Requested resource does not exist."
                 )
-
-            conn.sendall(server_response)
-            conn.close()
-
-        except KeyboardInterrupt:
+            socket.sendall(server_response)
+            socket.close()
             break
+    print(msg)
 
 
-if __name__ == "__main__":
-    run_server()
+def run_gevent_server():
+    from gevent.server import StreamServer
+    from gevent.monkey import patch_all
+    patch_all()
+    gserver = StreamServer(('127.0.0.1', 8000), echo)
+    print("starting server")
+    gserver.serve_forever()
+
+
+if __name__ == '__main__':
+    run_gevent_server()
