@@ -12,9 +12,9 @@ _RESPONSE_TEMPLATE = _CRLF.join([
     b"{date}",
     b"Content-Type: {content_type}",
     b"Content-Length: {content_length}",
-    "",
+    b"",
     b"{content_body}",
-    _CRLF,
+    b"",
 ])
 
 
